@@ -1,0 +1,8 @@
+# roles/wazuh_manager/vars/main.yml
+---
+version: "4.8.0-1"  # Default version
+extension: ".x86_64.rpm"  # Default architecture
+download_url: "https://packages.wazuh.com/4.x/yum/wazuh-manager-{{ version }}{{ extension }}"
+local_path: "./tmp/wazuh-agent/{{ version }}/{{ ansible_distribution }}/{{ ansible_architecture }}"
+local_download_path: "{{ local_path }}/wazuh-agent-{{ version }}{{ extension }}"  # Default destination path
+remote_copy_path: "/home/user/wazuh-agent/{{ version }}"

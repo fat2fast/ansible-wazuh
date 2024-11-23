@@ -1,0 +1,19 @@
+---
+- name: Download Wazuh Agent
+  gather_facts: yes
+  hosts: all
+  vars_prompt:
+    - name: "wazuh_manager"
+      prompt: "Enter WAZUH_MANAGER"
+      private: no
+    - name: "wazuh_agent_group"
+      prompt: "Enter WAZUH_AGENT_GROUP"
+      private: no
+    - name: "version"
+      prompt: "Enter WAZUH Version"
+      private: no  
+      default: "4.8.0-1"
+  pre_tasks:
+    - include_tasks: roles/wazuh_download/pre_tasks/main.yml
+  roles:
+    - wazuh_download

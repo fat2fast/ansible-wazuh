@@ -1,0 +1,30 @@
+# roles/wazuh_manager/tasks/main.yml
+---
+- name: Print Download Url
+  debug:
+    msg: "Downloaded url {{ download_url }}"
+- name: Download the Wazuh Agent
+  local_action:
+    module: get_url
+    url: "{{ download_url }}"
+    dest: "{{ local_download_path }}"
+  delegate_to: localhost
+- name: Verify the download
+  debug:
+    msg: "Downloaded file is located at {{ local_download_path }}"
+- name: Copy the Wazuh Agent package to the remote host
+  ansible.builtin.copy:
+    src: "{{ local_download_path }}"
+    dest: "{{ remote_copy_path }}/wazuh-agent-{{ version }}{{ extension }}"
+- name: Print Remote Path
+  debug:
+    msg: "{{ remote_copy_path }}/wazuh-agent-{{ version }}{{ extension }}"
+- name: Install Wazuh Agent
+  shell: "{{ install_command }}"
+  register: install_output
+- name: Print commnad
+  debug:
+    msg: "{{ install_command }}"
+- name: Print the command output in a message
+  debug:
+    msg: "The output of the command : {{ install_output.stdout }}"

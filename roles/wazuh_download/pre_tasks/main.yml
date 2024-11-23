@@ -1,0 +1,55 @@
+---
+- name: Check if wazuh-agent service is installed
+  command: systemctl list-unit-files
+  register: wazuh_agent_service
+
+- name: Determine if wazuh-agent is installed
+  set_fact:
+    wazuh_agent_installed: "{{ 'wazuh-agent' in wazuh_agent_service.stdout }}"
+- name: Print message if wazuh-agent is installed
+  debug:
+    msg: "Wazuh-agent is installed."
+  when: wazuh_agent_installed
+
+- name: Print message if wazuh-agent is not installed
+  debug:
+    msg: "wazuh-agent is not installed."
+  when: not wazuh_agent_installed
+- name: End play if wazuh-agent is installed
+  meta: end_host
+  when: wazuh_agent_installed
+  
+- name: Print distribution and architecture
+  debug:
+    msg: "Distribution: {{ ansible_distribution }} {{ ansible_distribution_version }}, Architecture: {{ ansible_architecture }} , version install {{ version }}"
+- name: Ensure the tmp folder exists
+  ansible.builtin.file:
+    path: "{{ local_path }}"
+    state: directory
+    mode: '0755'
+  delegate_to: localhost
+  when: not wazuh_agent_installed
+- name: Ensure the  remote copy path exists exists
+  ansible.builtin.file:
+    path: "{{ remote_copy_path }}"
+    state: directory
+    mode: '0755'
+  when: not wazuh_agent_installed
+- name: Print tmp folder
+  debug:
+    msg: "{{ local_path }}"
+  when: not wazuh_agent_installed
+- name: Define the download URL for CentOS x86_64
+  set_fact:
+    extension: ".x86_64.rpm"
+    download_url: "https://packages.wazuh.com/4.x/yum/wazuh-agent-{{ version }}{{ extension }}"
+  when: ansible_distribution == 'CentOS' and ansible_architecture == 'x86_64' and not wazuh_agent_installed
+- name: Define the download URL for Ubuntu or Debian x86_64
+  set_fact:
+    extension: "_amd64.deb"
+    download_url: "https://packages.wazuh.com/4.x/apt/pool/main/w/wazuh-agent/wazuh-agent_{{ version }}_amd64.deb"
+  when: (ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian')  and ansible_architecture == 'x86_64' and not wazuh_agent_installed
+- name: Define Command
+  set_fact:
+    install_command: "WAZUH_MANAGER='{{wazuh_manager}}' WAZUH_AGENT_GROUP='{{wazuh_agent_group}}' WAZUH_AGENT_NAME='{{ wazuh_agent_name }}' {% if ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian' %} dpkg -i {% elif ansible_distribution == 'CentOS' %} rpm -ihv {% endif %} {{ remote_copy_path }}/wazuh-agent-{{ version }}{{ extension }} && systemctl daemon-reload && systemctl enable wazuh-agent && systemctl start wazuh-agent"
+  when: not wazuh_agent_installed
